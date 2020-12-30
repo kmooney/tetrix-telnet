@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 bufstream = "0.1.4"
+tetrix = { path = "../tetrix" }
