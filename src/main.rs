@@ -56,8 +56,8 @@ fn print_help(s: &mut BufStream<TcpStream>) {
 
 fn print_title(s: &mut BufStream<TcpStream>) {
     cls(s);
-    s.write(b"TETRIX\r\n");
-    s.write(b"('h' for help)\r\n");
+    s.write(b"    T  E  T  R  I  X\r\n");
+    s.write(b"('h' for help, 's' to start)\r\n");
     s.flush();
 }
 
