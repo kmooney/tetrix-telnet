@@ -11,3 +11,5 @@ bufstream = "0.1.4"
 log = "0.4.6"
 simple_logger = "1.11.0"
 tetrix = { path = "../tetrix" }
+json = "0.12.4"
+phf = { version = "0.8.0", features = ["macros"] }
