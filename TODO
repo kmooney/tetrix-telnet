@@ -1,0 +1,18 @@
+[x] start a tetrix game on request
+[x] accept user input a byte at a time (input thread? how would that work?)
+[x] poll tetrix gamewrapper for events
+[x] interpret events and send to telnet buffer.
+[x] interactive help so they know how to, like, "start" the game.
+[x] real-deal logging
+[x] improve overall display - ANSI colors, score, lines
+[x] lib -> fix bug that prevents shapes from moving to right edge.
+[x] shape position update from library
+[x] re-do shape rendering
+[ ] why is there an awkard pause after a drop - it's because the 
+    drop ends at y = 1, not y = 0
+[ ] map drop to spacebar, down to 'k'
+[ ] it sure would be cool to watch other games....
+[ ] it sure would be cool to get a game list...
+[ ] telnet negotiate width and store per client. crop or pad ansi graphic from 80 characters
+[ ] redraw on client IAC SB NAWS w/ padding
+
