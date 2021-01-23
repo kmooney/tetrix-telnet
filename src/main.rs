@@ -171,9 +171,9 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     done = true;
                 }
                 Output::BoardUpdate(b) => {
-                    log::info!("[{}] board update!",n);
+                    //log::info!("[{}] board update!",n);
                     //cls(&mut x.lock().unwrap());
-                    log::debug!("\r\n {}", b.report());
+                    //log::debug!("\r\n {}", b.report());
                 },
                 Output::LineCompleted(count) => {
                     log::info!("[{}] line completion event: {}", n, count);
@@ -182,6 +182,9 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     log::info!("[{}] score update: {}", n, score);
 
                 },
+                Output::ShapeLocked(shape) => {
+                    log::info!("[{}] shape locked: {:?}", n, shape);
+                }
                 Output::ShapePosition(shape, from_orientation, orientation, from, to) => {
                     
                         log::info!("[{}] shape position: {:?}, {:?}, {:?}", n, shape, orientation, to);
