@@ -42,9 +42,7 @@ fn poll_read_exact(s: &mut BufStream<TcpStream>, mut buf: &mut [u8]) {
     }
 }
 
-fn map_point(p: Point, r: &ShapeRep) -> Point {
-    let height = r.bytes.len() / r.width as usize;
-    log::info!("Mapping point y: {}, {}", p.y, height);
+fn map_point(p: Point) -> Point {
     return Point::new(
         2 + (p.x * 4),
         2 + ((24 - p.y) * 2)
@@ -63,11 +61,11 @@ fn pos(s: &mut BufStream<TcpStream>, p: Point) {
 
 fn cursor_fwd(s: &mut BufStream<TcpStream>) {
     s.write(ANSI_ESCAPE).unwrap();
-    s.write(b"1C");
+    s.write(b"1C").unwrap();
 }
 
 fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
-    let mut p = map_point(p, &sh);
+    let mut p = map_point(p);
     let height = sh.bytes.len() / sh.width as usize;
     p.y -= height;
     pos(s, p);
@@ -90,7 +88,7 @@ fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
 }
 
 fn clear_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
-    let mut p = map_point(p, &sh);
+    let mut p = map_point(p);
     let height = sh.bytes.len() / sh.width as usize;
     p.y -= height;
     pos(s, p);
@@ -184,7 +182,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     log::info!("[{}] score update: {}", n, score);
 
                 },
-                Output::ShapePosition(shape, orientation, from, to) => {
+                Output::ShapePosition(shape, from_orientation, orientation, from, to) => {
                     
                         log::info!("[{}] shape position: {:?}, {:?}, {:?}", n, shape, orientation, to);
                         let rep = shapewrap::shape_rep(shape, orientation);
@@ -192,16 +190,16 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                         let mut strm = x.lock().unwrap();
                         match from {                    
                             Some(fp) => {
-                                let rep = shapewrap::shape_rep(shape, orientation);
+                                // i know that from_orientation is Some(from_orientation) if 
+                                // Some(fp)...
+                                let from_orientation = from_orientation.unwrap();
+                                let rep = shapewrap::shape_rep(shape, from_orientation);                                
                                 clear_shape(&mut strm, rep, fp)
                             },
                             _ => {}
-                        };
-
-                        
+                        };            
                         draw_shape(&mut strm, rep, to);
-                        strm.flush().unwrap();
-                    
+                        strm.flush().unwrap();                    
                 },
                 _ => {}
                 

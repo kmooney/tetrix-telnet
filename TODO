@@ -8,8 +8,15 @@
 [x] lib -> fix bug that prevents shapes from moving to right edge.
 [x] shape position update from library
 [x] re-do shape rendering
+[x] shape update on rotation
 [ ] why is there an awkard pause after a drop - it's because the 
     drop ends at y = 1, not y = 0
+[ ] shape update after drop
+[ ] shape update on lock??
+[ ] use the colors from the ShapeRep
+[ ] add background colors to shaperep
+
+--- extras ---
 [ ] map drop to spacebar, down to 'k'
 [ ] it sure would be cool to watch other games....
 [ ] it sure would be cool to get a game list...
