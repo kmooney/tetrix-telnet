@@ -42,8 +42,13 @@ fn poll_read_exact(s: &mut BufStream<TcpStream>, mut buf: &mut [u8]) {
     }
 }
 
-fn map_point(p: Point) -> Point {
-    return Point::new(2 + (p.x * 3), 2 + ((21 - p.y) * 2));
+fn map_point(p: Point, r: &ShapeRep) -> Point {
+    let height = r.bytes.len() / r.width as usize;
+    log::info!("Mapping point y: {}, {}", p.y, height);
+    return Point::new(
+        2 + (p.x * 4),
+        2 + ((24 - p.y) * 2)
+    );
 }
 
 fn next_line(p: Point) -> Point {
@@ -62,9 +67,12 @@ fn cursor_fwd(s: &mut BufStream<TcpStream>) {
 }
 
 fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
-    let mut p = map_point(p);
+    let mut p = map_point(p, &sh);
+    let height = sh.bytes.len() / sh.width as usize;
+    p.y -= height;
     pos(s, p);
     let mut i = 0;
+    
     for b in sh.bytes {
         if *b == b'*' {
             s.write(&[*b]).unwrap();
@@ -82,9 +90,12 @@ fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
 }
 
 fn clear_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
-    let mut p = map_point(p);
+    let mut p = map_point(p, &sh);
+    let height = sh.bytes.len() / sh.width as usize;
+    p.y -= height;
     pos(s, p);
     let mut i = 0;
+    
     for b in sh.bytes {
         if *b == b'*' {
             s.write(b" ").unwrap();
@@ -132,14 +143,13 @@ fn print_title(s: &mut BufStream<TcpStream>) {
 fn draw_board(s: &mut BufStream<TcpStream>) {
     s.write(b"[1;32m").unwrap();
     s.write(b"/----------------------------------------\\\r\n").unwrap();
-    for _ in 0..40 {
-        s.write(b"|                                        |\r\n").unwrap();
+    for line_count in 0..48 {
+        s.write(format!("|                                        |{}\r\n", line_count + 2).as_bytes()).unwrap();
     }
     s.write(b"\\----------------------------------------/\r\n").unwrap();
     s.write(b"[0;0m").unwrap();
     s.flush().unwrap();
 }
-
 
 fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) { 
     let mut done = false;
@@ -165,7 +175,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                 Output::BoardUpdate(b) => {
                     log::info!("[{}] board update!",n);
                     //cls(&mut x.lock().unwrap());
-                    //wf(&mut x.lock().unwrap(), b.report().as_bytes());
+                    log::debug!("\r\n {}", b.report());
                 },
                 Output::LineCompleted(count) => {
                     log::info!("[{}] line completion event: {}", n, count);
@@ -187,6 +197,8 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                             },
                             _ => {}
                         };
+
+                        
                         draw_shape(&mut strm, rep, to);
                         strm.flush().unwrap();
                     
@@ -208,7 +220,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
             [b'z'] => g.send(Input::Ccw),
             [b'x'] => g.send(Input::Cw),
             [b's'] => g.send(Input::StartGame),
-            [b'q'] => { 
+            [b'q'] => {
                 g.send(Input::EndGame);
                 done = true;
             },
