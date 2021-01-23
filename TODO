@@ -9,7 +9,7 @@
 [x] shape position update from library
 [x] re-do shape rendering
 [x] shape update on rotation
-[ ] why is there an awkard pause after a drop - it's because the 
+[x] why is there an awkard pause after a drop - it's because the 
     drop ends at y = 1, not y = 0
 [ ] shape update after drop
 [ ] shape update on lock??
