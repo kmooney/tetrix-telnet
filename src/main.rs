@@ -70,7 +70,9 @@ fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
     p.y -= height;
     pos(s, p);
     let mut i = 0;
-    
+    s.write(ANSI_ESCAPE).unwrap();
+    s.write(sh.color_code.as_bytes()).unwrap();
+
     for b in sh.bytes {
         if *b == b'*' {
             s.write(&[*b]).unwrap();
@@ -123,7 +125,7 @@ fn wf(s: &mut BufStream<TcpStream>, buf: &[u8]) {
 fn print_help(s: &mut BufStream<TcpStream>) {
     cls(s);
     s.write(b"'i' and 'j' to move shapes; 'z' and 'x' rotate\r\n").unwrap();
-    s.write(b"'k' to drop; 'q' will quit.  have fuuuuun!!!!!\r\n").unwrap();
+    s.write(b"'k' to drop; 'q' will quit.  have fun!!!\r\n").unwrap();
     s.write(b"'s' to start the game!\r\n").unwrap();
     s.write(b"[press any key to continue]\r\n").unwrap();
     s.flush().unwrap();
@@ -138,11 +140,10 @@ fn print_title(s: &mut BufStream<TcpStream>) {
     s.flush().unwrap();
 }
 
-fn draw_board(s: &mut BufStream<TcpStream>) {
-    s.write(b"[1;32m").unwrap();
-    s.write(b"/----------------------------------------\\\r\n").unwrap();
+fn draw_board(s: &mut BufStream<TcpStream>) {    
+    s.write(b"[1;32m/----------------------------------------\\\r\n").unwrap();
     for line_count in 0..48 {
-        s.write(format!("|                                        |{}\r\n", line_count + 2).as_bytes()).unwrap();
+        s.write(format!("|[0;40m                                        [1;32m|{}\r\n", line_count + 2).as_bytes()).unwrap();
     }
     s.write(b"\\----------------------------------------/\r\n").unwrap();
     s.write(b"[0;0m").unwrap();
@@ -156,7 +157,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
     let q = g.queue();
 
     print_title(&mut x.lock().unwrap());    
-
+    
     while !done {
         for evt in GameWrapper::drain(q.clone()) {
             match evt {

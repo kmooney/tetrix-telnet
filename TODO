@@ -13,7 +13,7 @@
     drop ends at y = 1, not y = 0
 [x] shape update after drop
 [x] shape update on lock?? (same as drop??)
-[ ] use the colors from the ShapeRep
+[x] use the colors from the ShapeRep
 [ ] erase lines when completed!
 [ ] add background colors to shaperep
 [ ] infinite loop on Eye kick. what gives??
