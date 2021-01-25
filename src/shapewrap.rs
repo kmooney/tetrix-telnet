@@ -7,6 +7,8 @@ pub struct ShapeRep {
     pub color_code: &'static str
 }
 
+pub const SINGLE : ShapeRep = ShapeRep {bytes: b"* ** *", width: 3, color_code: "0;0m"};
+
 pub fn shape_rep(s: Shape, o: Orientation) -> ShapeRep {
     match s {
         Shape::Eye => match o {
@@ -49,4 +51,8 @@ pub fn shape_rep(s: Shape, o: Orientation) -> ShapeRep {
             Orientation::Right => ShapeRep {bytes: b"* *    * *    * * * ** * * ** *    * *    ", width: 7, color_code: "1;32m"}
         }
     }
+}
+
+pub fn shape_color(s: Shape) -> &'static str {
+    return shape_rep(s, Orientation::Up).color_code;
 }

@@ -64,14 +64,21 @@ fn cursor_fwd(s: &mut BufStream<TcpStream>) {
     s.write(b"1C").unwrap();
 }
 
-fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
+fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point, c: Option<&str>) {
     let mut p = map_point(p);
     let height = sh.bytes.len() / sh.width as usize;
     p.y -= height;
     pos(s, p);
+    
     let mut i = 0;
     s.write(ANSI_ESCAPE).unwrap();
-    s.write(sh.color_code.as_bytes()).unwrap();
+
+    let cc = match c {
+        Some(code) => code,
+        None => sh.color_code
+    };
+
+    s.write(cc.as_bytes()).unwrap();
 
     for b in sh.bytes {
         if *b == b'*' {
@@ -86,6 +93,27 @@ fn draw_shape(s: &mut BufStream<TcpStream>, sh: ShapeRep, p: Point) {
             p.y += 1;
             pos(s, p);            
         }        
+    }
+}
+
+fn draw_fill(s: &mut BufStream<TcpStream>, b: tetrix::board::Board) {
+    for y in 0..tetrix::HEIGHT {
+        for x in 0..tetrix::WIDTH {
+            if b.0[y][x] != None {
+                draw_shape(s, shapewrap::SINGLE, Point::new(x,y), Some(shapewrap::shape_color(b.0[y][x].unwrap())));
+            }
+            
+        }
+    }    
+}
+
+fn clear_fill(s: &mut BufStream<TcpStream>, b: tetrix::board::Board) {
+    for y in 0..tetrix::HEIGHT {
+        for x in 0..tetrix::WIDTH {
+            if b.0[y][x] != None {
+                clear_shape(s, shapewrap::SINGLE, Point::new(x,y));
+            }
+        }
     }
 }
 
@@ -142,13 +170,15 @@ fn print_title(s: &mut BufStream<TcpStream>) {
 
 fn draw_board(s: &mut BufStream<TcpStream>) {    
     s.write(b"[1;32m/----------------------------------------\\\r\n").unwrap();
-    for line_count in 0..48 {
+    for line_count in 0..48 {        
         s.write(format!("|[0;40m                                        [1;32m|{}\r\n", line_count + 2).as_bytes()).unwrap();
-    }
+    }    
     s.write(b"\\----------------------------------------/\r\n").unwrap();
     s.write(b"[0;0m").unwrap();
     s.flush().unwrap();
 }
+
+
 
 fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) { 
     let mut done = false;
@@ -157,53 +187,61 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
     let q = g.queue();
 
     print_title(&mut x.lock().unwrap());    
-    
+    let mut old_board = tetrix::board::Board::new();
+    let mut current_board = tetrix::board::Board::new();
     while !done {
+        
         for evt in GameWrapper::drain(q.clone()) {
             match evt {
                 Output::GameStarted => {
                     let mut strm = x.lock().unwrap();
                     cls(&mut strm);
                     draw_board(&mut strm);
-                }
+                },
                 Output::GameOver => {
-                    log::info!("[{}] game over event",n);
-                    //wf(&mut x.lock().unwrap(), b"Game over\r\n");
+                    log::info!("[{}] game over!",n);
                     done = true;
-                }
+                },
                 Output::BoardUpdate(b) => {
                     //log::info!("[{}] board update!",n);
-                    //cls(&mut x.lock().unwrap());
-                    //log::debug!("\r\n {}", b.report());
+                    //log::info!("[{}] latest board update: ", b.report());
+                    //old_board = b;
+                    current_board = b;
                 },
-                Output::LineCompleted(count) => {
+                Output::LineCompleted(count, board) => {
                     log::info!("[{}] line completion event: {}", n, count);
+                    // we should redraw the board when we get this event.
+                    let mut strm = x.lock().unwrap();
+                    clear_fill(&mut strm, old_board);
+                    draw_fill(&mut strm, board);
+                    strm.flush().unwrap();
+                    log::info!("old board: {}", old_board.report());
+                    log::info!("new board: {}", board.report());
+                    log::info!("[{}] done handling line completion!", n);
                 },
                 Output::ScoreUpdate(score) => { 
                     log::info!("[{}] score update: {}", n, score);
-
                 },
-                Output::ShapeLocked(shape) => {
+                Output::ShapeLocked(shape, board) => {
                     log::info!("[{}] shape locked: {:?}", n, shape);
-                }
-                Output::ShapePosition(shape, from_orientation, orientation, from, to) => {
-                    
-                        log::info!("[{}] shape position: {:?}, {:?}, {:?}", n, shape, orientation, to);
-                        let rep = shapewrap::shape_rep(shape, orientation);
-                        log::debug!("[{}] shape rep: {:?}", n, rep);
-                        let mut strm = x.lock().unwrap();
-                        match from {                    
-                            Some(fp) => {
-                                // i know that from_orientation is Some(from_orientation) if 
-                                // Some(fp)...
-                                let from_orientation = from_orientation.unwrap();
-                                let rep = shapewrap::shape_rep(shape, from_orientation);                                
-                                clear_shape(&mut strm, rep, fp)
-                            },
-                            _ => {}
-                        };            
-                        draw_shape(&mut strm, rep, to);
-                        strm.flush().unwrap();                    
+                    old_board = board;
+                },
+                Output::ShapePosition(shape, from_orientation, orientation, from, to) => {                                            
+                    let rep = shapewrap::shape_rep(shape, orientation);
+                    log::info!("[{}] shape position: {:?}, {:?}, {:?} w={}, h={}", n, shape, orientation, to, rep.width, rep.bytes.len() / rep.width as usize);
+                    let mut strm = x.lock().unwrap();
+                    match from {                    
+                        Some(fp) => {
+                            // i know that from_orientation is Some(from_orientation) if 
+                            // Some(fp)...
+                            let from_orientation = from_orientation.unwrap();
+                            let rep = shapewrap::shape_rep(shape, from_orientation);                                
+                            clear_shape(&mut strm, rep, fp)
+                        },
+                        _ => {}
+                    };            
+                    draw_shape(&mut strm, rep, to, None);
+                    strm.flush().unwrap();                    
                 },
                 _ => {}
                 
@@ -222,6 +260,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
             [b'z'] => g.send(Input::Ccw),
             [b'x'] => g.send(Input::Cw),
             [b's'] => g.send(Input::StartGame),
+            [b'r'] => log::info!("report: {}",current_board.report()),
             [b'q'] => {
                 g.send(Input::EndGame);
                 done = true;

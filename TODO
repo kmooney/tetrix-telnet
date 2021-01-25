@@ -14,10 +14,22 @@
 [x] shape update after drop
 [x] shape update on lock?? (same as drop??)
 [x] use the colors from the ShapeRep
-[ ] erase lines when completed!
-[ ] add background colors to shaperep
+[x] fix the background color
+[x] erase lines when completed!
+   [x] store colors in board data - use u8 instead of bits
+   [x] when a line is completed send new board data for a board redraw
+   [x] redraw the board, if it exists.
+   [x] only send the line completion when the line status changes.
+   [x] send board info along w/ line completion
+[ ] there's a line clear bug - try and undersstand what's happening.
+[ ] add line count
+[ ] add level adjustment
+[ ] add next shape display
+[ ] add hold control
+[ ] add reserved shape display
+
 [ ] infinite loop on Eye kick. what gives??
-[ ] fix the background color
+[ ] add background colors to shaperep
 
 --- extras ---
 [ ] map drop to spacebar, down to 'k'
