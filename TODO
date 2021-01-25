@@ -21,6 +21,7 @@
    [x] redraw the board, if it exists.
    [x] only send the line completion when the line status changes.
    [x] send board info along w/ line completion
+[ ] what is up with L and LInv facing down?  Seems like they are causing display issues.
 [ ] there's a line clear bug - try and undersstand what's happening.
 [ ] add line count
 [ ] add level adjustment
