@@ -21,13 +21,16 @@
    [x] redraw the board, if it exists.
    [x] only send the line completion when the line status changes.
    [x] send board info along w/ line completion
-[ ] what is up with L and LInv facing down?  Seems like they are causing display issues.
-[ ] there's a line clear bug - try and undersstand what's happening.
-[ ] add line count
-[ ] add level adjustment
-[ ] add next shape display
-[ ] add hold control
-[ ] add reserved shape display
+[x] what is up with El and ElInv facing down?  Seems like they are causing display issues.
+    - the issue was the representation of the El in the library code. it landed differently than 
+    - the client expected, so the shape would go to 0,0 but the occupation matrix was off by one.
+[x] there's a line clear bug - try and undersstand what's happening.
+[ ] add line count to client display
+[ ] add level adjustment in wrapper
+[ ] add next shape display to client
+[ ] add hold control to client
+[ ] add reserved shape display to client
+[ ] aftertouch to ... library?
 
 [ ] infinite loop on Eye kick. what gives??
 [ ] add background colors to shaperep
