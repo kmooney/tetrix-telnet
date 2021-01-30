@@ -172,10 +172,6 @@ fn draw_score(s: &mut BufStream<TcpStream>, score: u32) {
     s.write(format!("Lines: {}", score).as_bytes()).unwrap();
 }
 
-fn draw_next(s: &mut BufStream<TcpStream>, next_shape: Shape) {
-
-}
-
 fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) { 
     let mut done = false;
             
