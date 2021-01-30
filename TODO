@@ -28,7 +28,7 @@
 [x] horizontal collision bug between Horizontal Eye and Up-oriented El
 [x] add score display
 [x] add next shape display to client
-[ ] infinite loop on Eye kick. what gives??
+[x] infinite loop on Eye kick. what gives??
 [ ] make "next shape" label move with the shape height
 [ ] add level increaser in wrapper
 [ ] add hold control to client
