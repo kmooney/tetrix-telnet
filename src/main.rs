@@ -2,7 +2,7 @@ mod shapewrap;
 use std::io::prelude::*;
 use bufstream::BufStream;
 use std::net::{TcpListener, TcpStream};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use tetrix::*;
 use tetrix::shape::{Shape, Orientation, Point};
@@ -10,8 +10,6 @@ use tetrix::event::Output;
 use tetrix::event::Input;
 use simple_logger::SimpleLogger;
 use log;
-use std::fs;
-use std::collections::HashMap;
 use shapewrap::ShapeRep;
 
 const ANSI_ESCAPE: &'static [u8] = &[0x1B, 0x5B];
@@ -47,10 +45,6 @@ fn map_point(p: Point) -> Point {
         2 + (p.x * 4),
         2 + ((24 - p.y) * 2)
     );
-}
-
-fn next_line(p: Point) -> Point {
-    return Point::new(p.x, p.y + 1);
 }
 
 fn pos(s: &mut BufStream<TcpStream>, p: Point) {
@@ -145,11 +139,6 @@ fn cls(s: &mut BufStream<TcpStream>) {
     s.write(b"[2J").unwrap();
 }
 
-fn wf(s: &mut BufStream<TcpStream>, buf: &[u8]) {
-    s.write(buf).unwrap();
-    s.flush().unwrap();
-}
-
 fn print_help(s: &mut BufStream<TcpStream>) {
     cls(s);
     s.write(b"'i' and 'j' to move shapes; 'z' and 'x' rotate\r\n").unwrap();
@@ -171,14 +160,21 @@ fn print_title(s: &mut BufStream<TcpStream>) {
 fn draw_board(s: &mut BufStream<TcpStream>) {    
     s.write(b"[1;32m/----------------------------------------\\\r\n").unwrap();
     for line_count in 0..48 {        
-        s.write(format!("|[0;40m                                        [1;32m|{}\r\n", line_count + 2).as_bytes()).unwrap();
+        s.write(format!("|[0;40m                                        [1;32m|{}\r\n",line_count + 2).as_bytes()).unwrap();
     }    
     s.write(b"\\----------------------------------------/\r\n").unwrap();
     s.write(b"[0;0m").unwrap();
     s.flush().unwrap();
 }
 
+fn draw_score(s: &mut BufStream<TcpStream>, score: u32) {
+    pos(s, Point::new(47, 13));
+    s.write(format!("Lines: {}", score).as_bytes()).unwrap();
+}
 
+fn draw_next(s: &mut BufStream<TcpStream>, next_shape: Shape) {
+
+}
 
 fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) { 
     let mut done = false;
@@ -189,14 +185,21 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
     print_title(&mut x.lock().unwrap());    
     let mut old_board = tetrix::board::Board::new();
     let mut current_board = tetrix::board::Board::new();
+    let mut started = false;
+    let mut next_shape = Shape::El;
     while !done {
         
         for evt in GameWrapper::drain(q.clone()) {
             match evt {
                 Output::GameStarted => {
+                    started = true;
                     let mut strm = x.lock().unwrap();
                     cls(&mut strm);
                     draw_board(&mut strm);
+                    pos(&mut strm, Point::new(46,2));
+                    strm.write(b"Next shape").unwrap();
+                    draw_score(&mut strm, 0);
+                    strm.flush().unwrap();
                 },
                 Output::GameOver => {
                     log::info!("[{}] game over!",n);
@@ -213,7 +216,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     // we should redraw the board when we get this event.
                     let mut strm = x.lock().unwrap();
                     clear_fill(&mut strm, old_board);
-                    draw_fill(&mut strm, board);
+                    draw_fill(&mut strm, board);                    
                     strm.flush().unwrap();
                     log::info!("old board: {}", old_board.report());
                     log::info!("new board: {}", board.report());
@@ -221,10 +224,22 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                 },
                 Output::ScoreUpdate(score) => { 
                     log::info!("[{}] score update: {}", n, score);
+                    let mut strm = x.lock().unwrap();
+                    draw_score(&mut strm, score);
+                    strm.flush().unwrap();
                 },
                 Output::ShapeLocked(shape, board) => {
                     log::info!("[{}] shape locked: {:?}", n, shape);
                     old_board = board;
+                },
+                Output::NextShape(shape) => {
+                    let old_rep = shapewrap::shape_rep(next_shape, Orientation::Up);
+                    let new_rep = shapewrap::shape_rep(shape, Orientation::Up);                    
+                    let mut strm = x.lock().unwrap();
+                    let p = Point::new(11, 19);
+                    clear_shape(&mut strm, old_rep, p);
+                    draw_shape(&mut strm, new_rep, p, None);
+                    next_shape = shape;
                 },
                 Output::ShapePosition(shape, from_orientation, orientation, from, to) => {                                            
                     let rep = shapewrap::shape_rep(shape, orientation);
@@ -252,14 +267,22 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
         // dispatch        
         s.lock().unwrap().read_exact(&mut buf);
         match buf {
-            [b'h'] => print_help(&mut s.lock().unwrap()),
+            [b'h'] => {
+                if !started {
+                    print_help(&mut s.lock().unwrap());
+                }
+            }
             [b'j'] => g.send(Input::Left),
             [b'k'] => g.send(Input::Drop),
             [b'l'] => g.send(Input::Right),
             //[b'i'] => g.send(Input::Hold),
             [b'z'] => g.send(Input::Ccw),
             [b'x'] => g.send(Input::Cw),
-            [b's'] => g.send(Input::StartGame),
+            [b's'] => {
+                if !started {
+                    g.send(Input::StartGame)
+                }
+            },
             [b'r'] => log::info!("report: {}",current_board.report()),
             [b'q'] => {
                 g.send(Input::EndGame);
