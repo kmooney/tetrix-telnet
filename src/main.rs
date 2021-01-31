@@ -139,6 +139,12 @@ fn cls(s: &mut BufStream<TcpStream>) {
     s.write(b"[2J").unwrap();
 }
 
+fn clr(s: &mut BufStream<TcpStream>, amt: usize) {
+    for _ in 0..amt {
+        s.write(b" ").unwrap();
+    }
+}
+
 fn print_help(s: &mut BufStream<TcpStream>) {
     cls(s);
     s.write(b"'i' and 'j' to move shapes; 'z' and 'x' rotate\r\n").unwrap();
@@ -168,7 +174,7 @@ fn draw_board(s: &mut BufStream<TcpStream>) {
 }
 
 fn draw_score(s: &mut BufStream<TcpStream>, score: u32) {
-    pos(s, Point::new(47, 13));
+    pos(s, Point::new(46, 13));
     s.write(format!("Lines: {}", score).as_bytes()).unwrap();
 }
 
@@ -183,6 +189,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
     let mut current_board = tetrix::board::Board::new();
     let mut started = false;
     let mut next_shape = Shape::El;
+    let mut next_pos = None;
     while !done {
         
         for evt in GameWrapper::drain(q.clone()) {
@@ -193,7 +200,6 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     cls(&mut strm);
                     draw_board(&mut strm);
                     pos(&mut strm, Point::new(46,2));
-                    strm.write(b"Next shape").unwrap();
                     draw_score(&mut strm, 0);
                     strm.flush().unwrap();
                 },
@@ -232,9 +238,22 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     let old_rep = shapewrap::shape_rep(next_shape, Orientation::Up);
                     let new_rep = shapewrap::shape_rep(shape, Orientation::Up);                    
                     let mut strm = x.lock().unwrap();
+                    match next_pos {
+                        None => {},
+                        Some(p) => {
+                            pos(&mut strm, p);
+                            clr(&mut strm, 11);
+                        }
+                    }
                     let p = Point::new(11, 19);
+                    let h = new_rep.bytes.len() / new_rep.width as usize;
                     clear_shape(&mut strm, old_rep, p);
                     draw_shape(&mut strm, new_rep, p, None);
+                    let p = map_point(Point::new(p.x, p.y));
+                    let p = Point::new(p.x, p.y - h - 2);
+                    pos(&mut strm, p);
+                    next_pos = Some(p);
+                    strm.write(b"Next shape").unwrap();
                     next_shape = shape;
                 },
                 Output::ShapePosition(shape, from_orientation, orientation, from, to) => {                                            
@@ -293,7 +312,6 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
 fn main() {
     SimpleLogger::new().init().unwrap();
     log::info!("Starting service on 0.0.0.0 at port 23");
-    log::debug!("loading ANS gameboard..");    
     let listener = TcpListener::bind("0.0.0.0:23").unwrap();
     for stream in listener.incoming() {        
         log::info!("New connection. Staring thread!");

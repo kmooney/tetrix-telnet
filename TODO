@@ -9,8 +9,8 @@
 [x] shape position update from library
 [x] re-do shape rendering
 [x] shape update on rotation
-[x] why is there an awkard pause after a drop - it's because the 
-    drop ends at y = 1, not y = 0
+[x] why is there an awkard pause after a drop 
+   - it's because the drop ends at y = 1, not y = 0
 [x] shape update after drop
 [x] shape update on lock?? (same as drop??)
 [x] use the colors from the ShapeRep
@@ -30,10 +30,13 @@
 [x] add next shape display to client
 [x] infinite loop on Eye kick. what gives??
 [ ] make "next shape" label move with the shape height
+[ ] rotation collision bugs with other shapes
 [ ] add level increaser in wrapper
 [ ] add hold control to client
 [ ] add reserved shape display to client
 [ ] aftertouch to ... library?
+[ ] arrow keys in addition to ijkl for controls
+
 
 
 
