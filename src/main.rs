@@ -19,8 +19,7 @@ fn poll_readline(s: &mut BufStream<TcpStream>, mut buf: &mut String) {
     while !done {
         match s.read_line(&mut buf) {
             Err(e) => match e {
-                WouldBlock => {thread::sleep(std::time::Duration::from_millis(100))},
-                _ => {panic!(format!("Unknown error {}", e))}
+                _ => {thread::sleep(std::time::Duration::from_millis(100))},
             },
             Ok(_) => { done = true }
         }
@@ -32,8 +31,7 @@ fn poll_read_exact(s: &mut BufStream<TcpStream>, mut buf: &mut [u8]) {
     while !done {
         match s.read_exact(&mut buf) {
             Err(e) => match e {
-                WouldBlock => {thread::sleep(std::time::Duration::from_millis(100))},
-                _ => {panic!(format!("Unknown error {}", e))}
+                _ => {thread::sleep(std::time::Duration::from_millis(100))},                
             },
             Ok(_) => { done = true }
         }
@@ -178,6 +176,11 @@ fn draw_score(s: &mut BufStream<TcpStream>, score: u32) {
     s.write(format!("Lines: {}", score).as_bytes()).unwrap();
 }
 
+fn draw_level(s: &mut BufStream<TcpStream>, level: u8) {
+    pos(s, Point::new(46, 15));
+    s.write(format!("Level: {}", level + 1).as_bytes()).unwrap();
+}
+
 fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) { 
     let mut done = false;
             
@@ -190,6 +193,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
     let mut started = false;
     let mut next_shape = Shape::El;
     let mut next_pos = None;
+    let mut lvl : u8 = 0;
     while !done {
         
         for evt in GameWrapper::drain(q.clone()) {
@@ -201,6 +205,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     draw_board(&mut strm);
                     pos(&mut strm, Point::new(46,2));
                     draw_score(&mut strm, 0);
+                    draw_level(&mut strm, lvl);
                     strm.flush().unwrap();
                 },
                 Output::GameOver => {
@@ -208,14 +213,10 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     done = true;
                 },
                 Output::BoardUpdate(b) => {
-                    //log::info!("[{}] board update!",n);
-                    //log::info!("[{}] latest board update: ", b.report());
-                    //old_board = b;
                     current_board = b;
                 },
                 Output::LineCompleted(count, board) => {
-                    log::info!("[{}] line completion event: {}", n, count);
-                    // we should redraw the board when we get this event.
+                    log::info!("[{}] line completion event: {}", n, count);                    
                     let mut strm = x.lock().unwrap();
                     clear_fill(&mut strm, old_board);
                     draw_fill(&mut strm, board);                    
@@ -228,6 +229,14 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     log::info!("[{}] score update: {}", n, score);
                     let mut strm = x.lock().unwrap();
                     draw_score(&mut strm, score);
+                    
+                    if (score / 10) as u8 != lvl {
+                        log::debug!("score is {}, score / 10 is {}, lvl is {}", score, score / 10, lvl);
+                        lvl = (score / 10) as u8;
+                        g.set_level(lvl);
+                        draw_level(&mut strm, lvl);
+                    }
+                    
                     strm.flush().unwrap();
                 },
                 Output::ShapeLocked(shape, board) => {
@@ -258,7 +267,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                 },
                 Output::ShapePosition(shape, from_orientation, orientation, from, to) => {                                            
                     let rep = shapewrap::shape_rep(shape, orientation);
-                    log::info!("[{}] shape position: {:?}, {:?}, {:?} w={}, h={}", n, shape, orientation, to, rep.width, rep.bytes.len() / rep.width as usize);
+                    //log::debug!("[{}] shape position: {:?}, {:?}, {:?} w={}, h={}", n, shape, orientation, to, rep.width, rep.bytes.len() / rep.width as usize);
                     let mut strm = x.lock().unwrap();
                     match from {                    
                         Some(fp) => {
