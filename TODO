@@ -32,12 +32,13 @@
 [x] rotation collision bugs with other shapes: Eye shape still has a bug when colliding with shapes.
 [x] add level increaser in wrapper
 [x] add level display
-[ ] add hold control to client
-[ ] add reserved shape display to client
-[ ] aftertouch to ... library?
+[x] add hold control to client
+[x] add reserved shape display to client
 [ ] arrow keys in addition to ijkl for controls
+[ ] aftertouch to ... library?
 [ ] look into  mysterious lockup on line completion
 [ ] GAME OVER / [r]estart or [Q]uit?
+[ ] do we really need a mutex around the telnet client's stream??
 
 
 --- extras ---
