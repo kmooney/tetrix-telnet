@@ -181,11 +181,11 @@ fn draw_level(s: &mut BufStream<TcpStream>, level: u8) {
     s.write(format!("Level: {}", level + 1).as_bytes()).unwrap();
 }
 
-fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) { 
+fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) { 
     let mut done = false;
-            
+    let mut g = tetrix::GameWrapper::new(tetrix::game());
     let x = s.clone();
-    let q = g.queue();
+    let mut q = g.queue();
 
     print_title(&mut x.lock().unwrap());    
     let mut old_board = tetrix::board::Board::new();
@@ -198,10 +198,12 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
     let mut latest_shape = None;
     let mut latest_orientation = None;
     let mut latest_position = None;
+    let mut game_over = false;
     while !done {
         for evt in GameWrapper::drain(q.clone()) {
             match evt {
                 Output::GameStarted => {
+                    game_over = false;
                     started = true;
                     let mut strm = x.lock().unwrap();
                     cls(&mut strm);
@@ -213,7 +215,7 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                 },
                 Output::GameOver => {
                     log::info!("[{}] game over!",n);
-                    done = true;
+                    game_over = true;
                 },
                 Output::BoardUpdate(b) => {
                     current_board = b;
@@ -320,6 +322,34 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
             }
         }
 
+        if game_over {
+            let mut strm = s.lock().unwrap();
+            cls(&mut strm);
+            let mut gameover_chat = true;
+            while gameover_chat {
+                strm.write(b"Game over! You wanna play again? [y/n]\r\n").unwrap();
+                strm.flush().unwrap();
+                let mut buf = [b'n'];
+                poll_read_exact(&mut strm, &mut buf);
+                match buf {
+                    [b'y'] => {
+                        // start a new game..
+                        g = tetrix::GameWrapper::new(tetrix::game());
+                        q = g.queue();
+                        print_title(&mut strm);
+                        gameover_chat = false;
+                        game_over = false;
+                        started = false;
+                    },
+                    [b'n'] => {
+                        done = true;
+                        gameover_chat = false;
+                    }
+                    _ => {}
+                }
+            }
+        }
+
         let mut buf = [0; 1];
         // dispatch                
         let mut in_str = s.lock().unwrap();
@@ -410,8 +440,10 @@ fn main() {
                 }
             }
             if buf[0] == b'y' || buf[0] == b'Y' {                                
-                let game_wrapper = tetrix::GameWrapper::new(tetrix::game());
-                play_tetris(game_wrapper, Arc::new(Mutex::new(stream)), name.to_string());            
+
+                play_tetris(Arc::new(Mutex::new(stream)), name.to_string());
+                
+
             } else {
                 stream.write(b"Bye!\r\n").unwrap();
             }

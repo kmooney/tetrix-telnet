@@ -35,10 +35,11 @@
 [x] add hold control to client
 [x] add reserved shape display to client
 [x] arrow keys in addition to jkl for controls
-[ ] aftertouch to...library?
-[ ] look into mysterious lockup on line completion
-[ ] GAME OVER / [r]estart or [Q]uit?
+[x] aftertouch to...library?
+[x] GAME OVER / [r]estart or [Q]uit?
+[ ] title screen
 [ ] do we really need a mutex around the telnet client's stream??
+[ ] look into mysterious lockup on line completion
 
 
 --- extras ---
