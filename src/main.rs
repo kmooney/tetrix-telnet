@@ -320,9 +320,10 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
             }
         }
 
-        let mut buf = [0; 1];   
-        // dispatch        
-        s.lock().unwrap().read_exact(&mut buf);
+        let mut buf = [0; 1];
+        // dispatch                
+        let mut in_str = s.lock().unwrap();
+        in_str.read_exact(&mut buf);
         match buf {
             [b'h'] => {
                 if !started {
@@ -345,7 +346,25 @@ fn play_tetris(g: GameWrapper, s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                 g.send(Input::EndGame);
                 done = true;
             },
-            _ => {}
+            [27] => {
+                in_str.read_exact(&mut buf);
+                match buf {
+                    [91] => {
+                        in_str.read_exact(&mut buf);
+                        match buf {
+                            [68] => g.send(Input::Left),
+                            [67] => g.send(Input::Right),
+                            [66] => g.send(Input::Drop),
+                            _ => {}
+                        }
+                    }, 
+                    _ => {}
+                }
+            },
+            [0] => {},
+            _ => {
+                log::info!("unknown user input: {:?}", buf);
+            }
         }
         thread::sleep(std::time::Duration::from_millis(50));
     }
