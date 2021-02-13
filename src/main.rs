@@ -1,4 +1,5 @@
 mod shapewrap;
+mod resources;
 use std::io::prelude::*;
 use bufstream::BufStream;
 use std::net::{TcpListener, TcpStream};
@@ -156,8 +157,7 @@ fn print_help(s: &mut BufStream<TcpStream>) {
 
 fn print_title(s: &mut BufStream<TcpStream>) {
     cls(s);
-    s.write(b"TETRIX TELNET EDITION (c) 2021\r\n").unwrap();
-    s.write(b"('h' for help, 's' to start)\r\n").unwrap();
+    s.write(resources::TITLE_TEXT).unwrap();    
     s.flush().unwrap();
 }
 
@@ -327,7 +327,7 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
             cls(&mut strm);
             let mut gameover_chat = true;
             while gameover_chat {
-                strm.write(b"Game over! You wanna play again? [y/n]\r\n").unwrap();
+                strm.write(resources::GAME_OVER_TEXT).unwrap();
                 strm.flush().unwrap();
                 let mut buf = [b'n'];
                 poll_read_exact(&mut strm, &mut buf);
