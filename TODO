@@ -37,6 +37,7 @@
 [x] arrow keys in addition to jkl for controls
 [x] aftertouch to...library?
 [x] GAME OVER / [r]estart or [Q]uit?
+[ ] reset lvl to zero after the game ends
 [ ] title screen
 [ ] do we really need a mutex around the telnet client's stream??
 [ ] look into mysterious lockup on line completion

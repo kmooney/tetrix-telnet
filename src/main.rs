@@ -340,6 +340,7 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                         gameover_chat = false;
                         game_over = false;
                         started = false;
+                        lvl = 0;
                     },
                     [b'n'] => {
                         done = true;
