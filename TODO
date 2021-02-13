@@ -38,7 +38,7 @@
 [x] aftertouch to...library?
 [x] GAME OVER / [r]estart or [Q]uit?
 [x] reset lvl to zero after the game ends
-[ ] show title screen
+[x] show title screen
 [ ] adjust hold behavior so you can only switch the shape once per drop
 [ ] clean up line numbers that were for debugging
 [ ] do we really need a mutex around the telnet client's stream??

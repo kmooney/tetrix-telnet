@@ -163,8 +163,8 @@ fn print_title(s: &mut BufStream<TcpStream>) {
 
 fn draw_board(s: &mut BufStream<TcpStream>) {    
     s.write(b"[1;32m/----------------------------------------\\\r\n").unwrap();
-    for line_count in 0..48 {        
-        s.write(format!("|[0;40m                                        [1;32m|{}\r\n",line_count + 2).as_bytes()).unwrap();
+    for _ in 0..48 {        
+        s.write(format!("|[0;40m                                        [1;32m|\r\n").as_bytes()).unwrap();
     }    
     s.write(b"\\----------------------------------------/\r\n").unwrap();
     s.write(b"[0;0m").unwrap();
@@ -333,6 +333,7 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                 poll_read_exact(&mut strm, &mut buf);
                 match buf {
                     [b'y'] => {
+                        log::info!("[{}] wants to play again",n);
                         // start a new game..
                         g = tetrix::GameWrapper::new(tetrix::game());
                         q = g.queue();
@@ -343,6 +344,7 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                         lvl = 0;
                     },
                     [b'n'] => {
+                        log::info!("[{}] wants to quit",n);
                         done = true;
                         gameover_chat = false;
                     }
@@ -414,16 +416,12 @@ fn main() {
             tcpstream.set_nonblocking(true).unwrap();
             let mut buf = String::new();
             let mut stream = BufStream::new(tcpstream);
-            
-            stream.write(b"Well hello there. What do we have here?\r\n").unwrap();
-            stream.write(b"Okay well, what's yer name? ").unwrap();
+            stream.write(b"Name please? ").unwrap();
             stream.flush().unwrap();
             poll_readline(&mut stream, &mut buf);
             
             let name = buf.trim();
-            stream.write(format!("Okay, {}, I've recorded that you were here.\r\n", name).as_bytes()).unwrap();
-            stream.flush().unwrap();
-            log::info!("Users name was {}", name);
+            log::info!("Users name is {}", name);
             let mut done = false;
             let mut buf = [0; 1];
             log::info!("Forcing client to character mode; no echo");
@@ -434,7 +432,7 @@ fn main() {
             while !done {                
                 
                 poll_read_exact(&mut stream, &mut buf);
-                log::info!("Read from buf: {:?}", buf);
+                log::debug!("Read from buf: {:?}", buf);
                 
                 if buf[0] == b'y' || buf[0] == b'Y' || buf[0] == b'n' || buf[0] == b'N' {
                     done = true;
