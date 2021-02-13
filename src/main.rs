@@ -332,6 +332,7 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
             cls(&mut strm);
             let mut gameover_chat = true;
             while gameover_chat {
+                pos(&mut strm, Point::new(1,1));
                 strm.write(resources::GAME_OVER_TEXT).unwrap();
                 strm.flush().unwrap();
                 let mut buf = [b'n'];
