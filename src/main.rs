@@ -264,8 +264,11 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                     if (score / 10) as u8 != lvl {
                         log::debug!("score is {}, score / 10 is {}, lvl is {}", score, score / 10, lvl);
                         lvl = (score / 10) as u8;
+                        log::debug!("setting level to {}", lvl);
                         g.set_level(lvl);
+                        log::debug!("updating level display");
                         draw_level(&mut strm, lvl);
+                        log::debug!("now at lvl {}", lvl);
                     }
                     
                     strm.flush().unwrap();
