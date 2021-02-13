@@ -39,10 +39,11 @@
 [x] GAME OVER / [r]estart or [Q]uit?
 [x] reset lvl to zero after the game ends
 [x] show title screen
+[x] look into mysterious lockup on line completion
+[x] clean up line numbers that were for debugging
 [ ] adjust hold behavior so you can only switch the shape once per drop
-[ ] clean up line numbers that were for debugging
 [ ] do we really need a mutex around the telnet client's stream??
-[ ] look into mysterious lockup on line completion
+
 
 
 --- extras ---

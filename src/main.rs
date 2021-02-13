@@ -157,11 +157,13 @@ fn print_help(s: &mut BufStream<TcpStream>) {
 
 fn print_title(s: &mut BufStream<TcpStream>) {
     cls(s);
+    pos(s, Point::new(1,1));
     s.write(resources::TITLE_TEXT).unwrap();    
     s.flush().unwrap();
 }
 
-fn draw_board(s: &mut BufStream<TcpStream>) {    
+fn draw_board(s: &mut BufStream<TcpStream>) { 
+    pos(s, Point::new(1,1));   
     s.write(b"[1;32m/----------------------------------------\\\r\n").unwrap();
     for _ in 0..48 {        
         s.write(format!("|[0;40m                                        [1;32m|\r\n").as_bytes()).unwrap();
@@ -419,6 +421,9 @@ fn main() {
             tcpstream.set_nonblocking(true).unwrap();
             let mut buf = String::new();
             let mut stream = BufStream::new(tcpstream);
+            cls(&mut stream);
+            pos(&mut stream, Point::new(1,1));
+            stream.flush().unwrap();
             stream.write(b"Name please? ").unwrap();
             stream.flush().unwrap();
             poll_readline(&mut stream, &mut buf);
