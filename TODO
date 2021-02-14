@@ -41,7 +41,10 @@
 [x] show title screen
 [x] look into mysterious lockup on line completion
 [x] clean up line numbers that were for debugging
+[ ] fix aftertouch for floored shapes
 [ ] adjust hold behavior so you can only switch the shape once per drop
+[ ] investigate hold behavior that causes display bug
+[ ] cyan Z leaves ANSI control codes from time to time...
 [ ] do we really need a mutex around the telnet client's stream??
 
 
