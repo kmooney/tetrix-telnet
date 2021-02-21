@@ -417,8 +417,7 @@ fn main() {
         log::info!("New connection. Staring thread. {:?}", stream);
         thread::spawn(|| {
             
-            let tcpstream = stream.unwrap();            
-            tcpstream.set_nonblocking(true).unwrap();
+            let tcpstream = stream.unwrap();                    
             let mut buf = String::new();
             let mut stream = BufStream::new(tcpstream);
             cls(&mut stream);
@@ -430,6 +429,11 @@ fn main() {
             
             let name = buf.trim();
             log::info!("Users name is {}", name);
+            if name == "" {
+                stream.write(b"No name? Bye!\r\n").unwrap();
+                log::info!("{} disconnected - noname", name);
+                return;
+            }
             let mut done = false;
             let mut buf = [0; 1];
             log::info!("Forcing client to character mode; no echo");
