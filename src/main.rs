@@ -414,11 +414,10 @@ fn main() {
     log::info!("Starting service on 0.0.0.0 at port 23");
     let listener = TcpListener::bind("0.0.0.0:23").unwrap();
     for stream in listener.incoming() {        
-        log::info!("New connection. Staring thread!");
+        log::info!("New connection. Staring thread. {:?}", stream);
         thread::spawn(|| {
             
-            let tcpstream = stream.unwrap();
-            log::info!("connected to {:?}", tcpstream);
+            let tcpstream = stream.unwrap();            
             tcpstream.set_nonblocking(true).unwrap();
             let mut buf = String::new();
             let mut stream = BufStream::new(tcpstream);
