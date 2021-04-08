@@ -203,6 +203,7 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
     let mut game_over = false;
     while !done {
         for evt in GameWrapper::drain(q.clone()) {
+            log::info!("start event handling");
             match evt {
                 Output::GameStarted => {
                     game_over = false;
@@ -303,7 +304,7 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                 },
                 Output::ShapePosition(shape, from_orientation, orientation, from, to) => {                                            
                     let rep = shapewrap::shape_rep(shape, orientation);
-                    //log::debug!("[{}] shape position: {:?}, {:?}, {:?} w={}, h={}", n, shape, orientation, to, rep.width, rep.bytes.len() / rep.width as usize);
+                    log::debug!("[{}] shape position: {:?}, {:?}, {:?} w={}, h={}", n, shape, orientation, to, rep.width, rep.bytes.len() / rep.width as usize);
                     let mut strm = x.lock().unwrap();
                     match from {                    
                         Some(fp) => {
@@ -316,19 +317,22 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
                         _ => {}
                     };            
                     draw_shape(&mut strm, rep, to, None);
-                    strm.flush().unwrap();
+                    
                     latest_shape = Some(shape);
                     latest_position = Some(to);
                     latest_orientation = Some(orientation);
+                    strm.flush().unwrap();
 
                 },
                 _ => {}
                 
             }
+            log::info!("event handling done");
         }
 
         if game_over {
-            let mut strm = s.lock().unwrap();
+            log::info!("game over is set");
+            let mut strm = x.lock().unwrap();
             cls(&mut strm);
             let mut gameover_chat = true;
             while gameover_chat {
@@ -361,12 +365,12 @@ fn play_tetris(s: Arc<Mutex<BufStream<TcpStream>>>, n: String) {
 
         let mut buf = [0; 1];
         // dispatch                
-        let mut in_str = s.lock().unwrap();
+        let mut in_str = x.lock().unwrap();
         in_str.read_exact(&mut buf);
         match buf {
             [b'h'] => {
                 if !started {
-                    print_help(&mut s.lock().unwrap());
+                    print_help(&mut x.lock().unwrap());
                 }
             }
             [b'j'] => g.send(Input::Left),
@@ -417,7 +421,8 @@ fn main() {
         log::info!("New connection. Staring thread. {:?}", stream);
         thread::spawn(|| {
             
-            let tcpstream = stream.unwrap();                    
+            let tcpstream = stream.unwrap();   
+            tcpstream.set_nonblocking(true);                 
             let mut buf = String::new();
             let mut stream = BufStream::new(tcpstream);
             cls(&mut stream);
@@ -451,10 +456,7 @@ fn main() {
                 }
             }
             if buf[0] == b'y' || buf[0] == b'Y' {                                
-
                 play_tetris(Arc::new(Mutex::new(stream)), name.to_string());
-                
-
             } else {
                 stream.write(b"Bye!\r\n").unwrap();
             }

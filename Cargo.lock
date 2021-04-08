@@ -298,7 +298,9 @@ dependencies = [
 name = "tetrix"
 version = "0.1.0"
 dependencies = [
+ "log",
  "rand",
+ "simple_logger",
  "uuid",
 ]
 
