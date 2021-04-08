@@ -44,8 +44,9 @@
 [x] fix aftertouch for floored shapes
 [x] adjust hold behavior so you can only switch the shape once per drop
 [x] investigate hold behavior that causes display bug
-[ ] cyan Z leaves ANSI control codes from time to time...
+[x] cyan Z leaves ANSI control codes from time to time...
 [ ] do we really need a mutex around the telnet client's stream??
+[ ] black out the background on connect
 
 
 
