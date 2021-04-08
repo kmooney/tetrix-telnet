@@ -24,7 +24,7 @@ pub fn shape_rep(s: Shape, o: Orientation) -> ShapeRep {
             Orientation::Left  => ShapeRep {bytes: b"        * *        * ** * * * * ** * * * * *", width: 11, color_code: "1;34m"},            
         },
         Shape::ElInv => match o {
-            Orientation::Up    => ShapeRep {bytes: b"    * *    * *    * *    * ** * * ** * * *", width: 7, color_code: "1;35m"},
+            Orientation::Up    => ShapeRep {bytes: b"    * *    * *    * *    * ** * * ** * * *", width: 7, color_code: "1;35m"},           
             Orientation::Left  => ShapeRep {bytes: b"* * * * * ** * * * * *        * *        * *", width: 11, color_code: "1;35m"},
             Orientation::Down  => ShapeRep {bytes: b"* * * ** * * ** *    * *    * *    * *    ", width: 7, color_code: "1;35m"},
             Orientation::Right => ShapeRep {bytes: b"* *        * *        * * * * * ** * * * * *", width: 11, color_code: "1;35m"},
@@ -33,9 +33,15 @@ pub fn shape_rep(s: Shape, o: Orientation) -> ShapeRep {
             Orientation::Up    => ShapeRep {bytes: b"    * *    * ** * * ** * * ** *    * *    ", width: 7, color_code: "1;36m"},
             Orientation::Left  => ShapeRep {bytes: b"* * * *    * * * *        * * * *    * * * *", width: 11, color_code: "1;36m"},
             Orientation::Down  => ShapeRep {bytes: b"    * *    * ** * * ** * * ** *    * *    ", width: 7, color_code: "1;36m"},
-            Orientation::Right => ShapeRep {bytes: b"* * * *    * * * *        * * * *    * * * *", width: 11, color_code: "[1;36m"},
+            Orientation::Right => ShapeRep {bytes: b"* * * *    * * * *        * * * *    * * * *", width: 11, color_code: "1;36m"},
         },
         Shape::ZeeInv => match o {
+            /*
+                * * * *
+                * * * *
+            * * * *    
+            * * * *     
+            */
             Orientation::Left   => ShapeRep {bytes: b"    * * * *    * * * ** * * *    * * * *    ", width: 11, color_code: "1;37m"},
             Orientation::Right  => ShapeRep {bytes: b"    * * * *    * * * ** * * *    * * * *    ", width: 11, color_code: "1;37m"},
             Orientation::Up     => ShapeRep {bytes: b"* *    * *    * * * ** * * *    * *    * *", width: 7, color_code: "1;37m"},
